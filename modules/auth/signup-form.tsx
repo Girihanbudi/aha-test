@@ -1,34 +1,35 @@
 import React, { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-// COMPONENT
+import { signIn } from 'next-auth/react'
+import { useRouter } from 'next/router'
+import validator from 'validator'
+import { axiosFetch } from '@libs/axios'
+import Case from 'case'
+// COMPONENTS
 import useMediaQuery from '@mui/material/useMediaQuery'
-import {
-  Box,
-  Typography,
-  Input,
-  InputAdornment,
-  FormHelperText,
-  FormControl,
-  Divider,
-  Popper,
-  IconButton,
-} from '@mui/material'
+import { Box, Typography, Divider, IconButton, Popper } from '@mui/material'
 import { PaperProps } from '@mui/material/Paper'
+import ImportantTextBox from '@components/important-text-box'
 import AlignedButtonIcon from '@components/aligned-button-icon/aligned-button-icon'
 import FloatingPaper from '@components/floating-paper'
+import OutlinedInput from '@components/outlined-input'
 import ActionButton from '@components/action-button'
 import Link from '@components/link'
 // ICONS
 import EmailIcon from '@mui/icons-material/Email'
+import PersonIcon from '@mui/icons-material/Person'
 import HttpsIcon from '@mui/icons-material/Https'
+import CancelIcon from '@mui/icons-material/Cancel'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import GoogleIcon from '@mui/icons-material/Google'
 import FacebookIcon from '@mui/icons-material/Facebook'
-import CancelIcon from '@mui/icons-material/Cancel'
-// HANDLERS
-import { isValidEmail, isValidPassword } from './handler/validation'
-import { Visibility, VisibilityOff } from '@mui/icons-material'
-// CONST
-import { AUTH_SIGN_IN } from '@constants/route'
+// ERROR
+import UserError from '@modules/user/user-error'
+// HANDLER
+import { isValidUserPassword } from '@modules/user/handler/password-handler'
+// CONSTANTS
+import { MOBILE } from '@constants/screen-size'
 
 interface PwdState {
   password: string
@@ -40,21 +41,45 @@ const DefaultPwdState: PwdState = {
   visible: false,
 }
 
-const signUpForm = (props: PaperProps) => {
-  let properWidth = '400px'
-  const matchesWidth = useMediaQuery(`(min-width:${properWidth})`)
+interface SignUpFormProps extends PaperProps {
+  csrfToken: string
+}
 
-  const { t, i18n } = useTranslation()
+const signUpForm = (props: SignUpFormProps) => {
+  const isNotMobile = useMediaQuery(`(min-width:${MOBILE})`)
+  const router = useRouter()
+
+  const { t } = useTranslation()
+
+  const [message, setMessage] = useState<string>('')
+
+  // Email state ===
   const [email, setEmail] = useState<string>('')
   const [emailError, setEmailError] = useState<string | undefined>(undefined)
   const emailHandler = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const [validEmail, errorCode] = isValidEmail(e.target.value)
+    const isValidEmail = validator.isEmail(e.target.value)
     setEmail(e.target.value)
-    setEmailError(errorCode)
+    setEmailError(isValidEmail ? undefined : UserError.USER_EML_001.key)
   }
 
+  // Name state ===
+  const [name, setName] = useState<string>('')
+  const [nameError, setNameError] = useState<string | undefined>(undefined)
+
+  const nameHandler = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setName(Case.title(e.target.value))
+    if (e.target.value !== '') {
+      setNameError(undefined)
+    } else {
+      setNameError(UserError.USER_FLD_001.key)
+    }
+  }
+
+  // Password state ===
   const pwdErrAnchor = useRef<Element | null>(null)
   const [pwd, setPwd] = useState<PwdState>({ ...DefaultPwdState })
   const [rePwd, setRePwd] = useState<PwdState>({ ...DefaultPwdState })
@@ -63,7 +88,7 @@ const signUpForm = (props: PaperProps) => {
   const pwdHandler = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const [validPwd, errorCodes] = isValidPassword(
+    const [isValidPwd, errors] = isValidUserPassword(
       e.target.value,
       rePwd.password
     )
@@ -72,19 +97,22 @@ const signUpForm = (props: PaperProps) => {
       newPwd.password = e.target.value
       return newPwd
     })
-    setPwdErrors(errorCodes)
+    setPwdErrors([...errors.map((error) => error.key)])
   }
 
   const rePwdHandler = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const [validPwd, errorCodes] = isValidPassword(pwd.password, e.target.value)
+    const [isValidPwd, errors] = isValidUserPassword(
+      pwd.password,
+      e.target.value
+    )
     setRePwd((prevPwd) => {
       let newPwd = { ...prevPwd }
       newPwd.password = e.target.value
       return newPwd
     })
-    setPwdErrors(errorCodes)
+    setPwdErrors([...errors.map((error) => error.key)])
   }
 
   const handleShowPassword = (
@@ -97,162 +125,207 @@ const signUpForm = (props: PaperProps) => {
     })
   }
 
-  const disabledSignUpButton = (): boolean => {
-    return !(
-      email !== '' &&
-      pwd.password !== '' &&
-      rePwd.password !== '' &&
-      emailError === undefined &&
-      pwdErrors.length === 0
+  const handleSignUp = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    // Return if contain any error
+    if (
+      emailError !== undefined ||
+      nameError !== undefined ||
+      pwdErrors.length > 0
     )
+      return
+
+    const data = {
+      email: email,
+      name: name,
+      password: pwd.password,
+    }
+
+    const [code, res] = await axiosFetch({
+      method: 'post',
+      url: '/api/users/',
+      data: data,
+    })
+
+    if (code !== 201) {
+      setMessage(t(res.header.errorCodes.map((error) => error)))
+    } else {
+      signIn('credentials', {
+        email: email,
+        password: pwd.password,
+        callbackUrl: `/home`,
+      })
+    }
   }
 
   return (
     <FloatingPaper
-      shadowdensity={matchesWidth ? undefined : 0}
+      shadowdensity={isNotMobile ? undefined : 0}
       sx={{
-        p: 4,
-        width: matchesWidth ? properWidth : '100%',
+        p: 3,
+        width: isNotMobile ? '400px' : '100%',
         justifyContent: 'center',
         alignItems: 'center',
       }}
       {...props}
     >
       <Typography variant="h4" align="center" sx={{ fontWeight: 'bold' }}>
-        Sign Up
+        {t('AUTH_SIGNUP')}
       </Typography>
-      <Box pt={4}>
-        <form action="">
-          <Box py={1.5}>
-            <FormControl
-              variant="standard"
-              fullWidth
-              required
-              error={emailError !== undefined}
-            >
-              <Input
-                id="input-email"
-                value={email}
-                onChange={emailHandler}
-                fullWidth
-                placeholder="Email"
-                startAdornment={
-                  <InputAdornment position="start">
-                    <EmailIcon
-                      color={emailError !== undefined ? 'error' : 'inherit'}
-                    />
-                  </InputAdornment>
-                }
-              />
-              <Box>
-                <FormHelperText sx={{ textAlign: 'right' }}>
-                  {emailError && t(emailError)}
-                </FormHelperText>
-              </Box>
-            </FormControl>
-          </Box>
-          <Box py={1.5}>
-            <FormControl
-              variant="standard"
-              fullWidth
-              required
-              error={pwdErrors.length > 0}
-            >
-              <Input
-                id="input-password"
-                type={pwd.visible ? 'text' : 'password'}
-                value={pwd.password}
-                onChange={pwdHandler}
-                fullWidth
-                placeholder="Password"
-                error={pwdErrors.length > 0}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <HttpsIcon
-                      color={pwdErrors.length > 0 ? 'error' : 'inherit'}
-                    />
-                  </InputAdornment>
-                }
-                endAdornment={
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle-password-visibility"
-                      onClick={(e) => handleShowPassword(setPwd)}
-                      edge="end"
-                    >
-                      {pwd.visible ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                }
-              />
-            </FormControl>
-          </Box>
 
-          <Box py={1.5}>
-            <FormControl
-              variant="standard"
-              fullWidth
-              required
-              error={pwdErrors.length > 0}
-            >
-              <Input
-                id="input-retype-password"
-                type={rePwd.visible ? 'text' : 'password'}
-                ref={pwdErrAnchor}
-                value={rePwd.password}
-                onChange={rePwdHandler}
-                fullWidth
-                placeholder="Retype Password"
-                error={pwdErrors.length > 0}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <HttpsIcon
-                      color={pwdErrors.length > 0 ? 'error' : 'inherit'}
-                    />
-                  </InputAdornment>
-                }
-                endAdornment={
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle-retype-password-visibility"
-                      onClick={(e) => handleShowPassword(setRePwd)}
-                      edge="end"
-                    >
-                      {rePwd.visible ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                }
-              />
-            </FormControl>
+      {/* Sign up with credential */}
+      <Box pt={2}>
+        {message && (
+          <ImportantTextBox sx={{ mb: 1 }}>{message}</ImportantTextBox>
+        )}
+
+        <form onSubmit={handleSignUp}>
+          {/* Email Input */}
+          <Box py={0.5}>
+            <OutlinedInput
+              formControlProps={{
+                required: true,
+                error: emailError !== undefined,
+                size: 'small',
+              }}
+              inputProps={{
+                id: 'email',
+                type: 'email',
+                value: email,
+                placeholder: 'Email',
+                onChange: emailHandler,
+              }}
+              helperText={emailError && t(emailError)}
+              startAdornment={
+                <EmailIcon
+                  color={emailError !== undefined ? 'error' : 'inherit'}
+                />
+              }
+            />
+          </Box>
+          {/* Name Input */}
+          <Box py={0.5}>
+            <OutlinedInput
+              formControlProps={{
+                required: true,
+                error: nameError !== undefined,
+                size: 'small',
+              }}
+              inputProps={{
+                id: 'input-name',
+                type: 'name',
+                value: name,
+                color: nameError !== undefined ? 'error' : 'primary',
+                placeholder: t('INPUT_PLACEHOLDER_NAME'),
+                onChange: nameHandler,
+              }}
+              helperText={nameError && t(nameError)}
+              startAdornment={
+                <PersonIcon
+                  color={nameError !== undefined ? 'error' : 'inherit'}
+                />
+              }
+            />
+          </Box>
+          {/* Password Input */}
+          <Box py={0.5}>
+            <OutlinedInput
+              formControlProps={{
+                required: true,
+                error: pwdErrors.length > 0,
+                size: 'small',
+              }}
+              inputProps={{
+                type: pwd.visible ? 'text' : 'password',
+                value: pwd.password,
+                onChange: pwdHandler,
+                placeholder: t('INPUT_PLACEHOLDER_PWD'),
+                error: pwdErrors.length > 0,
+              }}
+              startAdornment={
+                <HttpsIcon color={pwdErrors.length > 0 ? 'error' : 'inherit'} />
+              }
+              endAdornment={
+                <IconButton
+                  aria-label="toggle-password-visibility"
+                  onClick={(e) => handleShowPassword(setPwd)}
+                  edge="end"
+                >
+                  {pwd.visible ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                </IconButton>
+              }
+            />
+          </Box>
+          {/* Retype Password Input */}
+          <Box py={0.5}>
+            <OutlinedInput
+              formControlProps={{
+                required: true,
+                error: pwdErrors.length > 0,
+                size: 'small',
+              }}
+              inputProps={{
+                id: 'input-retype-password',
+                type: rePwd.visible ? 'text' : 'password',
+                ref: pwdErrAnchor,
+                value: rePwd.password,
+                onChange: rePwdHandler,
+                placeholder: t('INPUT_PLACEHOLDER_REPWD'),
+                error: pwdErrors.length > 0,
+              }}
+              startAdornment={
+                <HttpsIcon color={pwdErrors.length > 0 ? 'error' : 'inherit'} />
+              }
+              endAdornment={
+                <IconButton
+                  aria-label="toggle-retype-password-visibility"
+                  onClick={(e) => handleShowPassword(setRePwd)}
+                  edge="end"
+                >
+                  {rePwd.visible ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                </IconButton>
+              }
+            />
           </Box>
           <Box pt={2} pb={4} sx={{ display: 'flex', justifyContent: 'center' }}>
-            <ActionButton variant="contained" disabled={disabledSignUpButton()}>
-              SIGN UP
+            <ActionButton fullWidth variant="contained" type="submit">
+              {t('BTN_SUBMIT')}
             </ActionButton>
           </Box>
         </form>
       </Box>
 
+      {/* Form Divider */}
       <Box>
         <Divider />
         <Box sx={{ mt: -1.5, display: 'flex', justifyContent: 'center' }}>
           <Box sx={{ px: 2, backgroundColor: 'white' }}>
-            <Typography align="center">or sign up with</Typography>
+            <Typography align="center">{t('AUTH_CONTINUE_WITH')}</Typography>
           </Box>
         </Box>
       </Box>
 
+      {/* Or Continue with other auth */}
       <Box py={2}>
         <Box width="100%" pt={1}>
-          <AlignedButtonIcon color="error" icon={<GoogleIcon />}>
-            <Box sx={{ py: 0.25, ml: -4 }}>
+          <AlignedButtonIcon
+            color="error"
+            icon={<GoogleIcon />}
+            onClick={() => signIn('google', { callbackUrl: `/home` })}
+          >
+            <Box sx={{ py: 0.25, ml: -3 }}>
               <Typography align="center">Google</Typography>
             </Box>
           </AlignedButtonIcon>
         </Box>
         <Box width="100%" pt={1}>
-          <AlignedButtonIcon color="info" icon={<FacebookIcon />}>
-            <Box sx={{ py: 0.25, ml: -4 }}>
+          <AlignedButtonIcon
+            color="info"
+            icon={<FacebookIcon />}
+            onClick={() => signIn('facebook', { callbackUrl: `/home` })}
+          >
+            <Box sx={{ py: 0.25, ml: -3 }}>
               <Typography align="center">Facebook</Typography>
             </Box>
           </AlignedButtonIcon>
@@ -267,9 +340,9 @@ const signUpForm = (props: PaperProps) => {
             alignItems: 'center',
           }}
         >
-          <Typography align="center">Already have an account?</Typography>
+          <Typography align="center">{t('AUTH_HAVE_ACCOUNT')}</Typography>
           <Box sx={{ pl: 0.5 }}>
-            <Link href={AUTH_SIGN_IN}>Sign In</Link>
+            <Link href="/auth/signin">{t('AUTH_SIGNIN')}</Link>
           </Box>
         </Box>
       </Box>

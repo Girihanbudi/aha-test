@@ -1,33 +1,27 @@
-import React, { useRef, useState } from 'react'
-import Link from 'next/link'
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-// COMPONENT
+import { signIn } from 'next-auth/react'
+import validator from 'validator'
+// COMPONENTS
 import useMediaQuery from '@mui/material/useMediaQuery'
-import {
-  Box,
-  Typography,
-  Input,
-  InputAdornment,
-  FormHelperText,
-  FormControl,
-  Divider,
-  Popper,
-  IconButton,
-} from '@mui/material'
+import { Box, Typography, Divider, IconButton } from '@mui/material'
+import { PaperProps } from '@mui/material/Paper'
 import AlignedButtonIcon from '@components/aligned-button-icon/aligned-button-icon'
 import FloatingPaper from '@components/floating-paper'
+import OutlinedInput from '@components/outlined-input'
 import ActionButton from '@components/action-button'
+import Link from '@components/link'
+import ImportantTextBox from '@components/important-text-box'
 // ICONS
 import EmailIcon from '@mui/icons-material/Email'
 import HttpsIcon from '@mui/icons-material/Https'
 import GoogleIcon from '@mui/icons-material/Google'
 import FacebookIcon from '@mui/icons-material/Facebook'
-import CancelIcon from '@mui/icons-material/Cancel'
-// HANDLERS
-import { isValidEmail, isValidPassword } from './handler/validation'
 import { Visibility, VisibilityOff } from '@mui/icons-material'
-// CONST
-import { AUTH_SIGN_UP } from '@constants/route'
+// ERROR
+import UserError from '@modules/user/user-error'
+// CONSTANTS
+import { MOBILE } from '@constants/screen-size'
 
 interface PwdState {
   password: string
@@ -39,55 +33,39 @@ const DefaultPwdState: PwdState = {
   visible: false,
 }
 
-const signInForm = () => {
-  // get screen size
-  const properWidth = '400px'
-  const matchesWidth = useMediaQuery(`(min-width:${properWidth})`)
-  console.log('is matches width', matchesWidth)
+interface SignInFormProps extends PaperProps {
+  error?: string
+}
 
-  const { t, i18n } = useTranslation()
+const signInForm = (props: SignInFormProps) => {
+  const isNotMobile = useMediaQuery(`(min-width:${MOBILE})`)
+
+  const { t } = useTranslation()
+
+  // Email state ===
   const [email, setEmail] = useState<string>('')
   const [emailError, setEmailError] = useState<string | undefined>(undefined)
   const emailHandler = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const [validEmail, errorCode] = isValidEmail(e.target.value)
+    const isValidEmail = validator.isEmail(e.target.value)
     setEmail(e.target.value)
-    setEmailError(errorCode)
+    setEmailError(isValidEmail ? undefined : UserError.USER_EML_001.key)
   }
 
-  const pwdErrAnchor = useRef<Element | null>(null)
+  // Password state
   const [pwd, setPwd] = useState<PwdState>({ ...DefaultPwdState })
-  const [rePwd, setRePwd] = useState<PwdState>({ ...DefaultPwdState })
-  const [pwdErrors, setPwdErrors] = useState<string[]>([])
-
+  const [pwdError, setPwdError] = useState<boolean>(false)
   const pwdHandler = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const [validPwd, errorCodes] = isValidPassword(
-      e.target.value,
-      rePwd.password
-    )
     setPwd((prevPwd) => {
       let newPwd = { ...prevPwd }
       newPwd.password = e.target.value
       return newPwd
     })
-    setPwdErrors(errorCodes)
+    setPwdError(e.target.value ? false : true)
   }
-
-  const rePwdHandler = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const [validPwd, errorCodes] = isValidPassword(pwd.password, e.target.value)
-    setRePwd((prevPwd) => {
-      let newPwd = { ...prevPwd }
-      newPwd.password = e.target.value
-      return newPwd
-    })
-    setPwdErrors(errorCodes)
-  }
-
   const handleShowPassword = (
     pwdSetter: React.Dispatch<React.SetStateAction<PwdState>>
   ) => {
@@ -98,161 +76,130 @@ const signInForm = () => {
     })
   }
 
-  const disabledSignUpButton = (): boolean => {
-    return !(
-      email !== '' &&
-      pwd.password !== '' &&
-      rePwd.password !== '' &&
-      emailError === undefined &&
-      pwdErrors.length === 0
-    )
+  const handleSignIn = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    // Return if contain any error
+    if (emailError !== undefined) return
+
+    signIn('credentials', {
+      email: email,
+      password: pwd.password,
+      callbackUrl: `/home`,
+    })
   }
 
   return (
     <FloatingPaper
-      shadowdensity={matchesWidth ? undefined : 0}
+      shadowdensity={isNotMobile ? undefined : 0}
       sx={{
-        p: 4,
-        width: matchesWidth ? properWidth : '100%',
+        p: 3,
+        width: isNotMobile ? '400px' : '100%',
         justifyContent: 'center',
         alignItems: 'center',
       }}
+      {...props}
     >
       <Typography variant="h4" align="center" sx={{ fontWeight: 'bold' }}>
-        Sign In
+        {t('AUTH_SIGNIN')}
       </Typography>
-      <Box pt={4}>
-        <form action="">
-          <Box py={1.5}>
-            <FormControl
-              variant="standard"
-              fullWidth
-              required
-              error={emailError !== undefined}
-            >
-              <Input
-                id="input-email"
-                value={email}
-                onChange={emailHandler}
-                fullWidth
-                placeholder="Email"
-                startAdornment={
-                  <InputAdornment position="start">
-                    <EmailIcon
-                      color={emailError !== undefined ? 'error' : 'inherit'}
-                    />
-                  </InputAdornment>
-                }
-              />
-              <Box>
-                <FormHelperText sx={{ textAlign: 'right' }}>
-                  {emailError && t(emailError)}
-                </FormHelperText>
-              </Box>
-            </FormControl>
+      {/* Sign in with credential */}
+      <Box pt={2}>
+        {props.error && (
+          <ImportantTextBox sx={{ mb: 1 }}>{t(props.error)}</ImportantTextBox>
+        )}
+        <form onSubmit={handleSignIn}>
+          {/* Email Input */}
+          <Box py={0.5}>
+            <OutlinedInput
+              formControlProps={{
+                required: true,
+                error: emailError !== undefined,
+                size: 'small',
+              }}
+              inputProps={{
+                id: 'input-email',
+                value: email,
+                placeholder: 'Email',
+                onChange: emailHandler,
+              }}
+              helperText={emailError && t(emailError)}
+              startAdornment={
+                <EmailIcon
+                  color={emailError !== undefined ? 'error' : 'inherit'}
+                />
+              }
+            />
           </Box>
-          <Box py={1.5}>
-            <FormControl
-              variant="standard"
-              fullWidth
-              required
-              error={pwdErrors.length > 0}
-            >
-              <Input
-                id="input-password"
-                type={pwd.visible ? 'text' : 'password'}
-                value={pwd.password}
-                onChange={pwdHandler}
-                fullWidth
-                placeholder="Password"
-                error={pwdErrors.length > 0}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <HttpsIcon
-                      color={pwdErrors.length > 0 ? 'error' : 'inherit'}
-                    />
-                  </InputAdornment>
-                }
-                endAdornment={
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle-password-visibility"
-                      onClick={(e) => handleShowPassword(setPwd)}
-                      edge="end"
-                    >
-                      {pwd.visible ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                }
-              />
-            </FormControl>
+          {/* Password Input */}
+          <Box py={0.5}>
+            <OutlinedInput
+              formControlProps={{
+                required: true,
+                error: pwdError,
+                size: 'small',
+              }}
+              inputProps={{
+                type: pwd.visible ? 'text' : 'password',
+                value: pwd.password,
+                onChange: pwdHandler,
+                placeholder: t('INPUT_PLACEHOLDER_PWD'),
+                error: pwdError,
+              }}
+              startAdornment={
+                <HttpsIcon color={pwdError ? 'error' : 'inherit'} />
+              }
+              endAdornment={
+                <IconButton
+                  aria-label="toggle-password-visibility"
+                  onClick={(e) => handleShowPassword(setPwd)}
+                  edge="end"
+                >
+                  {pwd.visible ? <Visibility /> : <VisibilityOff />}
+                </IconButton>
+              }
+            />
           </Box>
-
-          <Box py={1.5}>
-            <FormControl
-              variant="standard"
-              fullWidth
-              required
-              error={pwdErrors.length > 0}
-            >
-              <Input
-                id="input-retype-password"
-                type={rePwd.visible ? 'text' : 'password'}
-                ref={pwdErrAnchor}
-                value={rePwd.password}
-                onChange={rePwdHandler}
-                fullWidth
-                placeholder="Retype Password"
-                error={pwdErrors.length > 0}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <HttpsIcon
-                      color={pwdErrors.length > 0 ? 'error' : 'inherit'}
-                    />
-                  </InputAdornment>
-                }
-                endAdornment={
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle-retype-password-visibility"
-                      onClick={(e) => handleShowPassword(setRePwd)}
-                      edge="end"
-                    >
-                      {rePwd.visible ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                }
-              />
-            </FormControl>
-          </Box>
-          <Box pt={2} pb={4} sx={{ display: 'flex', justifyContent: 'center' }}>
-            <ActionButton variant="contained" disabled={disabledSignUpButton()}>
-              SIGN IN
+          <Box pt={2} sx={{ display: 'flex', justifyContent: 'center' }}>
+            <ActionButton fullWidth variant="contained" type="submit">
+              {t('BTN_LOGIN')}
             </ActionButton>
           </Box>
         </form>
+        <Box sx={{ pt: 2, pb: 6, display: 'flex', justifyContent: 'center' }}>
+          <Link href="/auth/forgot-password">Forgot Email?</Link>
+        </Box>
       </Box>
 
+      {/* Form divider */}
       <Box>
         <Divider />
         <Box sx={{ mt: -1.5, display: 'flex', justifyContent: 'center' }}>
           <Box sx={{ px: 2, backgroundColor: 'white' }}>
-            <Typography align="center">or sign in with</Typography>
+            <Typography align="center">{t('AUTH_CONTINUE_WITH')}</Typography>
           </Box>
         </Box>
       </Box>
 
+      {/* Sign in with other auth */}
       <Box py={2}>
         <Box width="100%" pt={1}>
-          <AlignedButtonIcon color="error" icon={<GoogleIcon />}>
-            <Box sx={{ py: 0.25, ml: -4 }}>
+          <AlignedButtonIcon
+            color="error"
+            icon={<GoogleIcon />}
+            onClick={() => signIn('google', { callbackUrl: `/home` })}
+          >
+            <Box sx={{ py: 0.25, ml: -3 }}>
               <Typography align="center">Google</Typography>
             </Box>
           </AlignedButtonIcon>
         </Box>
         <Box width="100%" pt={1}>
-          <AlignedButtonIcon color="info" icon={<FacebookIcon />}>
-            <Box sx={{ py: 0.25, ml: -4 }}>
+          <AlignedButtonIcon
+            color="info"
+            icon={<FacebookIcon />}
+            onClick={() => signIn('facebook', { callbackUrl: `/home` })}
+          >
+            <Box sx={{ py: 0.25, ml: -3 }}>
               <Typography align="center">Facebook</Typography>
             </Box>
           </AlignedButtonIcon>
@@ -267,39 +214,12 @@ const signInForm = () => {
             alignItems: 'center',
           }}
         >
-          <Typography align="center">Don't have an account yet?</Typography>
+          <Typography align="center">{t('AUTH_DONT_HAVE_ACCOUNT')}</Typography>
           <Box sx={{ pl: 0.5 }}>
-            <Link href={AUTH_SIGN_UP}>
-              <a>
-                <Typography color="InfoText">Sign Up</Typography>
-              </a>
-            </Link>
+            <Link href="/auth/signup">{t('AUTH_SIGNUP')}</Link>
           </Box>
         </Box>
       </Box>
-
-      {/* ERROR POPPER */}
-      <Popper
-        open={
-          pwdErrors.length > 0 && (pwd.password !== '' || rePwd.password !== '')
-        }
-        anchorEl={pwdErrAnchor.current}
-        placement="bottom-start"
-        disablePortal={true}
-      >
-        <Box sx={{ ml: 2 }}>
-          <FloatingPaper shadowdensity={0.3} sx={{ p: 2 }}>
-            {pwdErrors.map((error) => (
-              <Box key={error} sx={{ display: 'flex' }}>
-                <CancelIcon sx={{ pr: 1 }} color="error" />
-                <Typography color="error" variant="body2">
-                  {t(error)}
-                </Typography>
-              </Box>
-            ))}
-          </FloatingPaper>
-        </Box>
-      </Popper>
     </FloatingPaper>
   )
 }
