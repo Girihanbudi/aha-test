@@ -6,5 +6,20 @@
   "[typescriptreact]":{
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
-  }
+  },
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  },
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 5433,
+      "askForPassword": true,
+      "driver": "PostgreSQL",
+      "database": "aha-test",
+      "name": "aha-test-local",
+      "username": "postgres"
+    }
+  ]
 }
