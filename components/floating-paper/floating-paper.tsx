@@ -5,7 +5,12 @@ interface FloatingPaperProps extends PaperProps {
   shadowdensity?: number
 }
 
-export const floatingPaper = styled(Paper)<FloatingPaperProps>(
+/**
+ * Floating Paper
+ * A paper that have a controlled floating effect (shadow)
+ * e.g. User card | Login Card
+ */
+export const FloatingPaper = styled(Paper)<FloatingPaperProps>(
   ({ theme, shadowdensity }) => {
     const shadowY: number =
       shadowdensity !== undefined ? shadowdensity * 15 : 15
@@ -33,4 +38,4 @@ export const floatingPaper = styled(Paper)<FloatingPaperProps>(
   }
 )
 
-export default floatingPaper
+export default FloatingPaper

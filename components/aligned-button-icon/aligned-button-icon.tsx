@@ -7,6 +7,11 @@ interface AlignedButtonIconProps extends ButtonProps {
   children?: React.ReactNode
 }
 
+/**
+ * Aligned Button Icon
+ * Button that contain icon in the left side and text | other react node in the middle
+ * e.g. Login with facebook | Login with google
+ */
 const AlignedButtonIcon = (props: AlignedButtonIconProps) => {
   const { icon, children } = props
 

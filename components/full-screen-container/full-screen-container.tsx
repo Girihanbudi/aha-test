@@ -1,6 +1,11 @@
 import Box, { BoxProps } from '@mui/material/Box'
 
-export const fullScreenContainer = (props: BoxProps) => {
+/**
+ * Full Screen Container
+ * A container that strech content to fid width user screen size
+ * e.g. Can be used to initial landing page to place info
+ */
+export const FullScreenContainer = (props: BoxProps) => {
   return (
     <Box
       sx={{
@@ -18,4 +23,4 @@ export const fullScreenContainer = (props: BoxProps) => {
   )
 }
 
-export default fullScreenContainer
+export default FullScreenContainer

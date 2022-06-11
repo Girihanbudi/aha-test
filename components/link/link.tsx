@@ -1,5 +1,5 @@
 import React from 'react'
-import { styled } from '@mui/material/styles'
+import { styled, SxProps, Theme } from '@mui/material/styles'
 import NextLink, { LinkProps as NextLinkProps } from 'next/link'
 
 import Typography, { TypographyProps } from '@mui/material/Typography'
@@ -17,16 +17,22 @@ export const LinkText = styled(Typography)<TypographyProps>(({ theme }) => ({
 
 interface CustomLinkProps extends NextLinkProps {
   children?: React.ReactNode
+  sx?: SxProps<Theme> | undefined
 }
 
-const link = (props: CustomLinkProps) => {
+/**
+ * Link
+ * Default styled link in app
+ * e.g. link to homepage
+ */
+const Link = (props: CustomLinkProps) => {
   return (
     <NextLink {...props}>
       <a>
-        <LinkText>{props.children}</LinkText>
+        <LinkText sx={props.sx}>{props.children}</LinkText>
       </a>
     </NextLink>
   )
 }
 
-export default link
+export default Link

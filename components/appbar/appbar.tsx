@@ -1,22 +1,35 @@
-import {
-  AppBar as MuiAppBar,
-  Box,
-  Toolbar,
-  Typography,
-  Button
-} from '@mui/material';
+import React from 'react'
+import Link from 'next/link'
+import MuiAppBar from '@mui/material/AppBar'
+import Box from '@mui/material/Box'
+import Toolbar from '@mui/material/Toolbar'
+import Typography from '@mui/material/Typography'
 
-export const AppBar = () => {
+interface AppBarProps {
+  title?: string
+  titleLink?: string
+  children?: React.ReactNode
+}
 
-
+const AppBar = ({
+  title = process.env.NEXT_PUBLIC_APPNAME,
+  titleLink,
+  children,
+}: AppBarProps) => {
   return (
     <Box sx={{ flexGrow: 1 }}>
       <MuiAppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-           <b>GithHub</b> Jobs
+            {titleLink ? (
+              <Link href={titleLink}>
+                <a>{title}</a>
+              </Link>
+            ) : (
+              title
+            )}
           </Typography>
-          <Button color="inherit">Logout</Button>
+          {children && <div>{children}</div>}
         </Toolbar>
       </MuiAppBar>
     </Box>

@@ -1,7 +1,12 @@
 import Box, { BoxProps } from '@mui/material/Box'
-import { BEST_MAX_WIDTH } from '@constants/view'
+import { BEST_MAX_WIDTH } from '@constants/screen-size'
 
-export const contentContainer = (props: BoxProps) => {
+/**
+ * Content Container
+ * A container for any content that limit max width to prevent content stretch in big screen
+ * e.g. Blog page container
+ */
+export const ContentContainer = (props: BoxProps) => {
   return (
     <Box
       sx={{
@@ -14,4 +19,4 @@ export const contentContainer = (props: BoxProps) => {
   )
 }
 
-export default contentContainer
+export default ContentContainer
