@@ -1,5 +1,4 @@
 import prisma from '@libs/prisma'
-import Case from 'case'
 import { User } from '@prisma/client'
 import UserError from '@modules/user/user-error'
 import ErrorCode from '@common/error-code'
@@ -29,7 +28,7 @@ const changeUserProfile = async (
       },
       data: {
         modifiedAt: new Date(),
-        name: Case.lower(name),
+        name: name,
       },
     })
     return [updatedUser, null]

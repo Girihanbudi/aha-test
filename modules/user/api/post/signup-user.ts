@@ -1,7 +1,6 @@
 import cuid from 'cuid'
 import validator from 'validator'
 import prisma from '@libs/prisma'
-import Case from 'case'
 import { hashPassword } from '@utils/bcrypt'
 import { User } from '@prisma/client'
 import { isValidUserPassword } from '@modules/user/handler/password-handler'
@@ -44,7 +43,7 @@ const signUpUser = async (
         modifiedAt: currentTime,
         emailVerified: null,
         email: email,
-        name: Case.lower(name),
+        name: name,
         password: await hashPassword(password),
         image: '',
       },
