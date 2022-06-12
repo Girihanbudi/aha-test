@@ -17,4 +17,4 @@ This repository is used to demonstrated a fullstack application for sample admin
 > https://aha-work-test.herokuapp.com
 
 ### API documentation :
-> 
+> https://documenter.getpostman.com/view/7070614/Uz5Njsv7
