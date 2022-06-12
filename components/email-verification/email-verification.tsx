@@ -20,7 +20,7 @@ const EmailVerification = (props: EmailVerificationProps) => {
         </p>
         <div className={styles.midContainer}>
           <div>
-            <a href={props.link} target="_blank">
+            <a href={props.link} target="_blank" rel="noreferrer">
               <p className={styles.buttonStyle}>VERIFY MY EMAIL</p>
             </a>
           </div>
@@ -34,7 +34,7 @@ const EmailVerification = (props: EmailVerificationProps) => {
             new tab of your browser
           </p>
 
-          <a href={props.link}>
+          <a href={props.link} rel="noreferrer">
             <p className={styles.link}>{props.link}</p>
           </a>
         </div>
