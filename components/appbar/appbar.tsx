@@ -11,11 +11,7 @@ interface AppBarProps {
   children?: React.ReactNode
 }
 
-const AppBar = ({
-  title = process.env.NEXT_PUBLIC_APPNAME,
-  titleLink,
-  children,
-}: AppBarProps) => {
+const AppBar = ({ title = 'Aha Test', titleLink, children }: AppBarProps) => {
   return (
     <Box sx={{ flexGrow: 1 }}>
       <MuiAppBar position="static">
