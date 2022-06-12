@@ -16,6 +16,7 @@ export const resources = {
       ...getTranslation(AuthError, 'En'),
       AUTH_CONTINUE_WITH: `or continue with`,
       AUTH_SIGNIN: `Sign In`,
+      AUTH_FORGOT_PASSWORD: `Forgot Password?`,
       AUTH_HAVE_ACCOUNT: `Already have an account?`,
       AUTH_SIGNUP: `Sign Up`,
       AUTH_DONT_HAVE_ACCOUNT: `Don't have an account yet?`,

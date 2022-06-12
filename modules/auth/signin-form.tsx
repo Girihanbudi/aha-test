@@ -166,7 +166,7 @@ const signInForm = (props: SignInFormProps) => {
           </Box>
         </form>
         <Box sx={{ pt: 2, pb: 6, display: 'flex', justifyContent: 'center' }}>
-          <Link href="/auth/forgot-password">Forgot Email?</Link>
+          <Link href="/auth/forgot-password">{t('AUTH_FORGOT_PASSWORD')}</Link>
         </Box>
       </Box>
 
