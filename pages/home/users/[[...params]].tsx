@@ -91,7 +91,6 @@ const UserPage = ({ limit, page }: UserProps) => {
 
   const changePage = (limit?: number, page?: number) => {
     // https://github.com/nextauthjs/next-auth/issues/1210#issuecomment-782630909
-
     router.push({
       pathname: '/home/users',
       query: {
@@ -187,10 +186,10 @@ const UserPage = ({ limit, page }: UserProps) => {
             columns={userColumns}
             sx={{ mt: 2 }}
             pagination
-            page={page - 1}
+            // page={page - 1}
             pageSize={limit}
-            onPageSizeChange={(newPageSize) => changePage(newPageSize, page)}
-            onPageChange={(page) => changePage(limit, page)}
+            onPageSizeChange={(newLimit) => changePage(newLimit, page)}
+            onPageChange={(newPage) => changePage(limit, newPage)}
             rowsPerPageOptions={[5, 10, 25, 50, 100]}
           />
         </Box>
