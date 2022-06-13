@@ -33,12 +33,12 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { DataGrid, GridColDef } from '@mui/x-data-grid'
 
 const userColumns: GridColDef[] = [
-  { field: 'name', headerName: 'Name', flex: 1, resizable: true },
+  { field: 'name', headerName: 'Name', flex: 1 },
   {
     field: 'createdAt',
     headerName: 'Created At',
     flex: 1,
-    resizable: true,
+
     renderCell(params) {
       return (
         <Tooltip title={moment(new Date(params.value)).fromNow()}>
@@ -47,20 +47,19 @@ const userColumns: GridColDef[] = [
       )
     },
   },
-  { field: 'email', headerName: 'Email', flex: 1, resizable: true },
+  { field: 'email', headerName: 'Email', flex: 1 },
   {
     field: 'numberOfLogin',
     headerName: 'Number of Login',
     headerAlign: 'right',
     align: 'right',
     flex: 1,
-    resizable: true,
   },
   {
     field: 'lastSession',
     headerName: 'Last Session',
     flex: 1,
-    resizable: true,
+
     renderCell(params) {
       return (
         <Tooltip title={moment(new Date(params.value)).fromNow()}>
