@@ -4,7 +4,7 @@
 // export const TABLET = '768px'
 // export const MOBILE = '480px'
 
-export const MOBILE = '321px' /* smartphones, iPhone, portrait 480x320 phones */
+export const MOBILE = '414px' /* smartphones, iPhone, portrait 480x320 phones */
 export const TABLET_1 =
   '481px' /* portrait e-readers (Nook/Kindle), smaller tablets @ 600 or @ 640 wide. */
 export const TABLET_2 =

@@ -164,7 +164,7 @@ const signUpForm = (props: SignUpFormProps) => {
       shadowdensity={isNotMobile ? undefined : 0}
       sx={{
         p: 3,
-        width: isNotMobile ? '400px' : '100%',
+        width: isNotMobile ? '400px' : '100vw',
         justifyContent: 'center',
         alignItems: 'center',
       }}
