@@ -48,7 +48,7 @@ export default NextAuth({
           )
 
           if (error === null) return user
-          else Promise.reject(new Error(error.key))
+          // else Promise.reject(new Error(error.key))
         }
         return null
       },
