@@ -3,8 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { signIn } from 'next-auth/react'
 import validator from 'validator'
 // COMPONENTS
-import useMediaQuery from '@mui/material/useMediaQuery'
-import { Box, Typography, Divider, IconButton } from '@mui/material'
+import json2mq from 'json2mq'
+import {
+  Box,
+  Typography,
+  Divider,
+  IconButton,
+  useMediaQuery,
+} from '@mui/material'
 import { PaperProps } from '@mui/material/Paper'
 import AlignedButtonIcon from '@components/aligned-button-icon/aligned-button-icon'
 import FloatingPaper from '@components/floating-paper'
@@ -38,7 +44,7 @@ interface SignInFormProps extends PaperProps {
 }
 
 const signInForm = (props: SignInFormProps) => {
-  const isNotMobile = useMediaQuery(`(min-width:${MOBILE})`)
+  const isNotMobile = useMediaQuery(json2mq({ minWidth: MOBILE }))
 
   const { t } = useTranslation()
 

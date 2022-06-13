@@ -26,6 +26,7 @@
     "cross-env": "^7.0.3",
     "cuid": "^2.1.8",
     "i18next": "^21.8.4",
+    "json2mq": "^0.2.0",
     "jwt-simple": "^0.5.6",
     "moment": "^2.29.3",
     "next": "12.1.6",
@@ -44,6 +45,7 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
+    "@types/json2mq": "^0.2.0",
     "@types/node": "17.0.35",
     "@types/react": "18.0.9",
     "@types/react-dom": "18.0.5",

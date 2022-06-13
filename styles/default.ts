@@ -164,6 +164,13 @@ export const lightTheme = createTheme({
       contrastDefaultColor: 'dark',
     },
   },
+  // components: {
+  //   MuiUseMediaQuery: {
+  //     defaultProps: {
+  //       noSsr: true,
+  //     },
+  //   },
+  // },
 })
 
 // export const darkTheme = createTheme({

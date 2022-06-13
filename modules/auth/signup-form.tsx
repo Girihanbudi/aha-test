@@ -1,11 +1,11 @@
 import React, { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/router'
 import validator from 'validator'
 import { axiosFetch } from '@libs/axios'
 import Case from 'case'
 // COMPONENTS
+import json2mq from 'json2mq'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { Box, Typography, Divider, IconButton, Popper } from '@mui/material'
 import { PaperProps } from '@mui/material/Paper'
@@ -46,8 +46,7 @@ interface SignUpFormProps extends PaperProps {
 }
 
 const signUpForm = (props: SignUpFormProps) => {
-  const isNotMobile = useMediaQuery(`(min-width:${MOBILE})`)
-  const router = useRouter()
+  const isNotMobile = useMediaQuery(json2mq({ minWidth: MOBILE }))
 
   const { t } = useTranslation()
 
