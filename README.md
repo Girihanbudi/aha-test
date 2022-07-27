@@ -15,7 +15,7 @@ This repository is used to demonstrated a fullstack application for sample admin
 - Bycript is used to secure data such as password or other sensitive data
 
 ### You can check out live demo in this link bellow
-> https://aha-work-test.herokuapp.com
+> https://social-login-girihanbudi.herokuapp.com/
 
 ### API documentation :
 > https://documenter.getpostman.com/view/7070614/Uz5Njsv7
